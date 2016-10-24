@@ -28,17 +28,17 @@ def parse(fname):
             if nb_parts == 0:
                 continue
             if parts[0] == TOKEN_VERTEX and nb_parts > 1:
-                vertices.append(parse_vertex(parts[1:], line_nb))
+                vertices.append(parse_vertex(parts[1:]))
             elif parts[0] == TOKEN_FACE and nb_parts > 1:
-                faces.append(parse_face(parts[1:], line_nb))
+                faces.append(parse_face(parts[1:]))
             elif print_unsupported:
                 print('Line {0}:  Not supported'.format(line_nb))
     return vertices, faces
                 
-def parse_vertex(parts, line_nb):
+def parse_vertex(parts):
     return np.array(map(np.float64, parts))
     
-def parse_face(parts, line_nb):
+def parse_face(parts):
     return np.array([parse_face_vertex(part) for part in parts])
     
 def parse_face_vertex(part):
