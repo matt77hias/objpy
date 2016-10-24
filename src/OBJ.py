@@ -36,17 +36,9 @@ def parse(fname):
     return vertices, faces
                 
 def parse_vertex(parts, line_nb):
-    nb_parts = len(parts)
-    if nb_parts != 3:
-        raise ValueError('Line {0}: Expected 3 coordinate values. Received {1}.'.format(line_nb, nb_parts))
-    
     return np.array(map(np.float64, parts))
     
 def parse_face(parts, line_nb):
-    nb_parts = len(parts)
-    if nb_parts != 3:
-        raise ValueError('Line {0}: Expected 3 vertex indices. Received {1}.'.format(line_nb, nb_parts))
-    
     return np.array([parse_face_vertex(part) for part in parts])
     
 def parse_face_vertex(part):
