@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 '''
-A Wavefront OBJ to Wavefront OBJ Converter which 
+A Wavefront OBJ to Wavefront OBJ Converter which
 * centers models at (Origin.x, Min.y, Origin.z)
-* rescales models at (<= 1, <= 1, <= 1)
+* isotropically rescales models to [0,1]^3
 @author     Matthias Moulin
 @version    1.0
 '''
