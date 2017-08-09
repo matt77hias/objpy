@@ -1,11 +1,11 @@
 # objpy
 
 ## About
-A lightweight Wavefront OBJ parser which only supports vertices and faces.
+`obj_parser.py`: A lightweight Wavefront OBJ parser which only supports vertices and faces.
 
 ## Use
 ```python
-import OBJ
+import obj_parser
 
-vertices, faces = OBJ.parse(fname)
+vertices, faces = obj_parser.parse(fname)
 ```
