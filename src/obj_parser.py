@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Lightweight Wavefront OBJ Parser.
+A lightweight Wavefront OBJ parser which only supports vertices and faces.
 @author     Matthias Moulin
 @version    1.0
 '''
