@@ -1,103 +1,138 @@
 # -*- coding: utf-8 -*-
 
 '''
-A Wavefront OBJ to Wavefront OBJ Converter which
-* centers models at (Origin.x, Min.y, Origin.z)
-* isotropically rescales models to [0,1]^3
+A Wavefront OBJ to Wavefront OBJ Converter.
 @author     Matthias Moulin
-@version    1.0
+@version    2.0
 '''
 
 import re
 from decimal import Decimal, getcontext
 
-REGEX_FLOAT = '[+-]?[0-9.]+'
+getcontext().prec = 23
 
-def get_normalization_values(fname_in): 
-    getcontext().prec = 23
-    
-    min_x = Decimal(100000)
-    min_y = Decimal(100000)
-    min_z = Decimal(100000)
-    max_x = Decimal(-100000)
-    max_y = Decimal(-100000)
-    max_z = Decimal(-100000)
-
-    with open(fname_in, 'r') as fin:
-        for line in fin:   
-            if line.startswith('v '):
-                floats = get_floats(line)
-                
-                x = Decimal(floats[0])
-                y = Decimal(floats[1])
-                z = Decimal(floats[2])
-                
-                min_x = min(min_x, x)
-                min_y = min(min_y, y)
-                min_z = min(min_z, z)
-                max_x = max(max_x, x)
-                max_y = max(max_y, y)
-                max_z = max(max_z, z)
-
-    cx = (min_x + max_x) / 2
-    cy = min_y
-    cz = (min_z + max_z) / 2
-       
-    dx = max_x - min_x
-    dy = max_y - min_y
-    dz = max_z - min_z
-    d = max(dx, dy, dz)
-    
-    print('Before:')
-    print('Min: {0} {1} {2}'.format(float(min_x), float(min_y), float(min_z)))
-    print('Max: {0} {1} {2}'.format(float(max_x), float(max_y), float(max_z)))
-    print('After:')
-    print('C: {0} {1} {2}'.format(float(cx), float(cy), float(cz)))
-    print('D: {0}'.format(float(d)))
-    
-    return cx, cy, cz, d
+REGEX_FLOAT = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
+rx = re.compile(REGEX_FLOAT, re.VERBOSE)
 
 def get_floats(string):
-    return map(float, re.findall(REGEX_FLOAT, string))
-def get_float2(string):
-    floats = get_floats(string)
-    x = floats[0]
-    y = floats[1]
-    return '{0} {1}'.format(x, y)
-def get_float3(string):
-    floats = get_floats(string)
-    x = floats[0]
-    y = floats[1]
-    z = floats[2]
-    return '{0} {1} {2}'.format(x, y, z)
-def get_normalized_float3(string, cx, cy, cz, d):
-    floats = get_floats(string)
-    x = float((Decimal(floats[0]) - cx) / d)
-    y = float((Decimal(floats[1]) - cy) / d)
-    z = float((Decimal(floats[2]) - cz) / d)
-    return '{0} {1} {2}'.format(x, y, z)
+    return list(map(float, rx.findall(string)))
 
-def convert(fname_in, fname_out, material=False):
-    cx, cy, cz, d = get_normalization_values(fname_in)
+class Normalizer(object):
 
-    with open(fname_out, 'w') as fout:
-        with open(fname_in, 'r') as fin:
+    def __init__(self, name):
+        self.__name__ = name
+        self.m_min = [Decimal( 100000), Decimal( 100000), Decimal( 100000)]
+        self.m_max = [Decimal(-100000), Decimal(-100000), Decimal(-100000)]
+
+    def add(self, vertex_coordinates):
+        vertex     = list(map(Decimal, vertex_coordinates))
+        self.m_min = list(map(min, zip(self.m_min, vertex)))
+        self.m_max = list(map(max, zip(self.m_max, vertex)))
+
+    def finish(self):
+        self.m_c =     list(map(lambda x: (x[1] + x[0]) / 2, zip(self.m_min, self.m_max)))
+        self.m_d = max(list(map(lambda x:  x[1] - x[0],      zip(self.m_min, self.m_max))))
+
+    def normalize(self, vertex_coordinates):
+        vertex = list(map(Decimal, vertex_coordinates))
+        return list(map(lambda x: float((x[1] - x[0]) / self.m_d), zip(self.m_c, vertex)))
+
+    def __repr__(self):
+        return self.__name__ \
+                + ' {0} {1} {2} 0 0 0'.format(*list(map(float, self.m_c))) \
+                + ' {0} {0} {0}'.format(float(self.m_d))
+
+    def __str__(self):
+        return self.__name__ \
+                + '\nBefore:' \
+                + '\nMin: {0} {1} {2}'.format(*list(map(float, self.m_min))) \
+                + '\nMax: {0} {1} {2}'.format(*list(map(float, self.m_max))) \
+                + '\nAfter:' \
+                + '\nC: {0} {1} {2}'.format(*list(map(float, self.m_c))) \
+                + '\nD: {0}'.format(float(self.m_d))
+
+def convert(fname):
+
+    # Calculate the normalization values to center the scene at its centroid 
+    # and unfirmorly rescale the scene to [0,1]^3 
+    current = Normalizer('scene')
+    with open(fname, 'r') as fin:
+        for line in fin:   
+            
+            if line.startswith('v '):
+                current.add(get_floats(line))
+    
+    current.finish()
+    print(current)
+    print()
+
+    # Normalize the scene
+    with open(fname + '1', 'w') as fout:
+        with open(fname, 'r') as fin:
             for line in fin:
                 
+                if line.startswith('v '):
+                    floats = current.normalize(get_floats(line))
+                    fout.write('v {0} {1} {2}\n'.format(floats[0], floats[1], floats[2]))
+                    continue
+                
                 if line.startswith('vt'):
-                    fout.write('vt ' + get_float2(line) + '\n')
+                    floats = get_floats(line)
+                    fout.write('vt {0} {1}\n'.format(floats[0], floats[1]))
                     continue
-                if line.startswith('vn'):
-                    fout.write('vn ' + get_float3(line) + '\n')
-                    continue
-                if line.startswith('v'):
-                    fout.write('v ' + get_normalized_float3(line, cx, cy, cz, d) + '\n')
-                    continue
-                if line.startswith('f'):
-                    fout.write(line)
-                    continue
-                if material:
-                    if line.startswith('g') \
+                
+                if line.startswith('vn') \
+                    or line.startswith('f') \
+                    or line.startswith('g') \
                     or line.startswith('mtllib') \
                     or line.startswith('usemtl'):
-                        fout.write(line)
+                    fout.write(line)
+
+    # Calculate the normalization values to center each group at its centroid 
+    # and unfirmorly rescale each group to [0,1]^3 
+    ns_group = {} 
+    current  = None
+    with open(fname + '1', 'r') as fin:
+        for line in fin:   
+            
+            if line.startswith('g'):
+                
+                if (current is not None):
+                    current.finish()
+                    print(current)
+                    print()
+                
+                name = line.split(' ')[1][:-1]
+                current = Normalizer(name)
+                ns_group[name] = current
+                continue
+
+            if line.startswith('v '):    
+                current.add(get_floats(line))
+                continue
+
+    if (current is not None):
+       current.finish()
+       print(current)
+       print()
+    else:
+        return
+
+    # Normalize the scene
+    current  = None
+    with open(fname + '2', 'w') as fout:
+        with open(fname + '1', 'r') as fin:
+            for line in fin:
+                
+                if line.startswith('g'):
+                    name = line.split(' ')[1][:-1]
+                    current = ns_group[name]
+                    fout.write('g ' + current.__repr__() + '\n')
+                    continue
+                
+                if line.startswith('v '):
+                    floats = current.normalize(get_floats(line))
+                    fout.write('v {0} {1} {2}\n'.format(floats[0], floats[1], floats[2]))
+                    continue
+                
+                fout.write(line)
