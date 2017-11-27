@@ -107,7 +107,7 @@ def convert(fname):
                 ns_group[name] = current
                 continue
 
-            if line.startswith('v '):    
+            if line.startswith('v ') and current is not None:
                 current.add(get_floats(line))
                 continue
 
