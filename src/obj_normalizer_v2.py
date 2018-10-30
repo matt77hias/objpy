@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-A Wavefront OBJ to Wavefront OBJ Converter.
+A Wavefront OBJ normalizer.
 @author     Matthias Moulin
 @version    2.0
 '''
@@ -81,12 +81,7 @@ def convert(fname):
                     fout.write('vt {0} {1}\n'.format(floats[0], floats[1]))
                     continue
                 
-                if line.startswith('vn') \
-                    or line.startswith('f') \
-                    or line.startswith('g') \
-                    or line.startswith('mtllib') \
-                    or line.startswith('usemtl'):
-                    fout.write(line)
+                fout.write(line)
 
     # Calculate the normalization values to center each group at its centroid 
     # and unfirmorly rescale each group to [0,1]^3 
