@@ -7,8 +7,8 @@
 
 ## About
 * `obj_parser.py`: A lightweight Wavefront OBJ parser which only supports vertices and faces.
-* `obj_normalizer_v1.py`: A Wavefront OBJ normalizer which centers models at (Origin.x, Min.y, Origin.z) and uniformly rescales models to [0,1]^3.
-* `obj_normalizer_v2.py`: A Wavefront OBJ normalizer which centers submodels at (Origin.x, Min.y, Origin.z) and uniformly rescales submodels to [0,1]^3.
+* `obj_normalizer_v1.py`: A Wavefront OBJ normalizer which centers models at (Origin.x, Min.y, Origin.z) and uniformly rescales models to [0,1]<sup>3</sup>.
+* `obj_normalizer_v2.py`: A Wavefront OBJ normalizer which centers submodels at (Origin.x, Min.y, Origin.z) and uniformly rescales submodels to [0,1]<sup>3</sup>.
 
 ## Use
 ```python
